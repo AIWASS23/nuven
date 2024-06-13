@@ -11,6 +11,8 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
 from sklearn.model_selection import train_test_split
+from keras.optimizers import SGD, RMSprop, Adam, AdamW, Adadelta, Adagrad, Adamax, Adafactor, Nadam, Ftrl
+
 
 
 # Caminho para o arquivo
@@ -248,11 +250,53 @@ model1.add(Dense(32, activation = activation))
 model1.add(Dropout(0.5))
 model1.add(Dense(num_classes, activation='softmax'))
 
+# # Lista de otimizadores disponíveis em Keras
+# optimizers = ['SGD', 'RMSprop', 'Adam', 'AdamW', 'Adadelta', 'Adagrad', 'Adamax', 'Adafactor', 'Nadam', 'Ftrl']
+
+# # Dicionário para armazenar os resultados de cada otimizador
+# results = {}
+
+# for optimizer_name in optimizers:
+#     # Compilar o modelo com o otimizador atual da iteração
+#     model1.compile(loss='categorical_crossentropy', optimizer=optimizer_name, metrics=['accuracy'])
+    
+#     # Treinar o modelo
+#     history = model1.fit(train_images, train_labels, epochs=3, batch_size=32, validation_data=(test_images, test_labels))
+    
+#     # Avaliar o modelo nos dados de teste
+#     results_model1_test = model1.evaluate(test_images, test_labels)
+#     results_model1_train = model1.evaluate(train_images, train_labels)
+    
+#     # Armazenar os resultados
+#     results[optimizer_name] = {
+#         'accuracy_test': results_model1_test[1],
+#         'accuracy_train': results_model1_train[1],
+#         'loss_test': results_model1_test[0],
+#         'loss_train': results_model1_train[0]
+#     }
+    
+#     # Imprimir os resultados do otimizador atual
+#     print(f"Resultados do modelo 1 com otimizador {optimizer_name}:")
+#     print(f"Acurácia teste: {results_model1_test[1]}")
+#     print(f"Acurácia treino: {results_model1_train[1]}")
+#     print(f"Perda teste: {results_model1_test[0]}")
+#     print(f"Perda treino: {results_model1_train[0]}")
+#     print("-----------------------------------------")
+
+# # Exibir todos os resultados
+# for optimizer_name, result in results.items():
+#     print(f"Resultados do modelo 1 com otimizador {optimizer_name}:")
+#     print(f"Acurácia teste: {result['accuracy_test']}")
+#     print(f"Acurácia treino: {result['accuracy_train']}")
+#     print(f"Perda teste: {result['loss_test']}")
+#     print(f"Perda treino: {result['loss_train']}")
+#     print("-----------------------------------------")
+
 # Compilar os modelos
-model1.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['accuracy']) # https://keras.io/api/optimizers/
+model1.compile(loss='', optimizer='Adam', metrics=['accuracy']) # https://keras.io/api/optimizers/
 
 # Treinar os modelos
-history1 = model1.fit(train_images, train_labels, epochs=3, batch_size=32, validation_data=(test_images, test_labels))
+history1 = model1.fit(train_images, train_labels, epochs=10, batch_size=32, validation_data=(test_images, test_labels))
 
 # Avaliar os modelos nos dados de teste
 results_model1_test = model1.evaluate(test_images, test_labels)
@@ -276,7 +320,7 @@ test_labels_classes = np.argmax(test_labels, axis=1)
 # Matriz de Confusão
 cm1 = confusion_matrix(test_labels_classes, predictions1_classes)
 
-# # Exibir Matriz de Confusão
+# Exibir Matriz de Confusão
 def plot_confusion_matrix(cm, model_name):
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Normal', 'Anormal'])
     disp.plot(cmap=plt.cm.Blues)
