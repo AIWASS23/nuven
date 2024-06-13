@@ -1,7 +1,5 @@
 import hashlib
-import time
 import os
-import shutil
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
@@ -11,6 +9,8 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import precision_score, recall_score
+from tensorflow.keras import Input
 
 # Caminho para o arquivo
 pastaDeDados = 'cells'
@@ -166,7 +166,8 @@ test_labels = tf.keras.utils.to_categorical(test_labels, num_classes=num_classes
 
 # Definir os modelos
 model1 = Sequential()
-model1.add(Conv2D(16, kernel_size=(3, 3), activation = activation, input_shape=(shape, shape, 3)))
+model1.add(Input(shape=(shape, shape, 3)))
+model1.add(Conv2D(16, kernel_size=(3, 3), activation = activation))
 model1.add(Conv2D(32, (3, 3), activation = activation))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
 model1.add(Conv2D(32, (3, 3), activation = activation))
@@ -192,22 +193,27 @@ results_model1_test = model1.evaluate(test_images, test_labels)
 results_model1_train = model1.evaluate(train_images, train_labels)
 
 # Imprimir os resultados
-print("Resultados do modelo 1:")
+print("Resultados do modelo:")
 print(f"Acurácia teste com {activation}: {results_model1_test[1]}")
 print(f"Acurácia treino com {activation}: {results_model1_train[1]}")
 print(f"Perda teste com {activation}: {results_model1_test[0]}")
 print(f"Perda treino com {activation}: {results_model1_train[0]}")
 
 # Previsões nos dados de teste
-predictions1 = model1.predict(test_images)
+predictions = model1.predict(test_images)
 
 # Converter previsões e labels para classe
-predictions1_classes = np.argmax(predictions1, axis=1)
-
+predictions_classes = np.argmax(predictions, axis=1)
 test_labels_classes = np.argmax(test_labels, axis=1)
 
+precision = precision_score(test_labels_classes, predictions_classes, average = 'weighted')
+recall = recall_score(test_labels_classes, predictions_classes, average = 'weighted')
+
+print(f"Precisão: {precision}")
+print(f"Revocação: {recall}")
+
 # Matriz de Confusão
-cm1 = confusion_matrix(test_labels_classes, predictions1_classes)
+cm1 = confusion_matrix(test_labels_classes, predictions_classes)
 
 # Exibir Matriz de Confusão
 def plot_confusion_matrix(cm, model_name):
@@ -218,3 +224,33 @@ def plot_confusion_matrix(cm, model_name):
     plt.show()
     
 plot_confusion_matrix(cm1, activation)
+
+# ate aqui deu bom
+
+def preprocess_image(img_path, target_size=(50, 50)):
+    img = image.load_img(img_path, target_size=target_size)
+    img_array = image.img_to_array(img)
+    img_array = img_array / 255.0  # Normalizar
+    img_array = np.expand_dims(img_array, axis=0)  # Adicionar uma dimensão extra para o batch
+    return img_array
+
+def classify_cell(model, img_path):
+    # Pré-processar a imagem
+    img_array = preprocess_image(img_path)
+    
+    # Fazer a predição
+    predictions = model.predict(img_array)
+    
+    # Obter a classe prevista
+    predicted_class = np.argmax(predictions, axis=1)
+    
+    # Mapear o índice da classe para o nome da classe
+    class_labels = {0: 'Normal', 1: 'Anormal'}
+    return class_labels[predicted_class[0]]
+
+# Caminho para a imagem a ser classificada
+image_path = 'path_to_new_image.tif'
+
+# Classificar a célula
+result = classify_cell(model1, image_path)
+print(f"A célula é classificada como: {result}")
