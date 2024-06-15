@@ -1,9 +1,8 @@
 import hashlib
 import os
-from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.models import Sequential
@@ -151,7 +150,7 @@ def load_data(main_folder, labels_file, target_size=(shape, shape)):
 images, labels, label_mapping = load_data(pastaDeDados, csv_file)
 
 # Dividir os dados em treino e teste
-train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=0.2, random_state=42)
+train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size = 0.2, random_state = 42)
 
 # Normalizar os dados
 train_images = train_images / 255.0
@@ -164,7 +163,7 @@ num_classes = len(label_mapping)
 train_labels = tf.keras.utils.to_categorical(train_labels, num_classes=num_classes)
 test_labels = tf.keras.utils.to_categorical(test_labels, num_classes=num_classes)
 
-# Definir os modelos
+# Definir o modelo
 model1 = Sequential()
 model1.add(Input(shape=(shape, shape, 3)))
 model1.add(Conv2D(16, kernel_size=(3, 3), activation = activation))
@@ -182,22 +181,15 @@ model1.add(Dense(32, activation = activation))
 model1.add(Dropout(0.5))
 model1.add(Dense(num_classes, activation='softmax'))
 
-# Compilar os modelos
-model1.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['accuracy']) # https://keras.io/api/optimizers/
+# Compilar o modelo
+model1.compile(loss = 'categorical_crossentropy', optimizer = 'Adam', metrics=['accuracy']) # https://keras.io/api/optimizers/
 
-# Treinar os modelos
-history1 = model1.fit(train_images, train_labels, epochs=10, batch_size=32, validation_data=(test_images, test_labels))
+# Treinar o modelo
+history1 = model1.fit(train_images, train_labels, epochs = 10, batch_size=32, validation_data = (test_images, test_labels))
 
-# Avaliar os modelos nos dados de teste
+# Avaliar o modelo nos dados de teste e treino
 results_model1_test = model1.evaluate(test_images, test_labels)
 results_model1_train = model1.evaluate(train_images, train_labels)
-
-# Imprimir os resultados
-print("Resultados do modelo:")
-print(f"Acurácia teste com {activation}: {results_model1_test[1]}")
-print(f"Acurácia treino com {activation}: {results_model1_train[1]}")
-print(f"Perda teste com {activation}: {results_model1_test[0]}")
-print(f"Perda treino com {activation}: {results_model1_train[0]}")
 
 # Previsões nos dados de teste
 predictions = model1.predict(test_images)
@@ -209,18 +201,26 @@ test_labels_classes = np.argmax(test_labels, axis=1)
 precision = precision_score(test_labels_classes, predictions_classes, average = 'weighted')
 recall = recall_score(test_labels_classes, predictions_classes, average = 'weighted')
 
+# Matriz de Confusão
+cm = confusion_matrix(test_labels_classes, predictions_classes)
+
+# Calcular F1-Score e Especificidade
+def specificity(y_true, y_pred):
+    cm = confusion_matrix(y_true, y_pred)
+    tn, fp, fn, tp = cm.ravel()
+    return tn / (tn + fp)
+
+f1 = f1_score(test_labels_classes, predictions_classes, average='weighted')
+spec = specificity(test_labels_classes, predictions_classes)
+
+# Imprimir os resultados
+print("Resultados do modelo:")
+print(f"Acurácia teste: {results_model1_test[1]}")
+print(f"Acurácia treino: {results_model1_train[1]}")
+print(f"Perda teste: {results_model1_test[0]}")
+print(f"Perda treino: {results_model1_train[0]}")
 print(f"Precisão: {precision}")
 print(f"Revocação: {recall}")
-
-# Matriz de Confusão
-cm1 = confusion_matrix(test_labels_classes, predictions_classes)
-
-# Exibir Matriz de Confusão
-def plot_confusion_matrix(cm, model_name):
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Normal', 'Anormal'])
-    disp.plot(cmap=plt.cm.Blues)
-    plt.title(f"Matriz de Confusão - {model_name}")
-    plt.savefig(f"Matriz de Confusão - {model_name}")
-    plt.show()
-    
-plot_confusion_matrix(cm1, activation)
+print(f'Matriz de confusão: {cm}')
+print(f'F1-Score: {f1}')
+print(f'Especificidade: {spec}')
